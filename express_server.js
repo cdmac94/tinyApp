@@ -19,7 +19,7 @@ function generateRandomString () {
 app.set("view engine", "ejs");
 
 const urlDatabase = {
-  "b2xVn2": "http;//www.lighthouselbas.ca",
+  "b2xVn2": "http://www.lighthouselbas.ca",
   "9sm5xK": "http://www.google.com"
 };
 
@@ -34,7 +34,13 @@ app.get("/urls", (req, res) => {
 
 app.post("/urls", (req, res) => {
   console.log(req.body);
-  res.send(generateRandomString());
+  let tinyUrl = generateRandomString();
+  res.send(urlDatabase[tinyUrl] = req.body.longURL);
+});
+
+app.get("/u/:shortURL", (req, res) => {
+  const longURL = urlDatabase[tinyUrl];
+  res.redirect(longURL);
 });
 
 app.get("/urls.json", (req, res) => {
