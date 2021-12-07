@@ -33,8 +33,9 @@ app.get("/urls", (req, res) => {
 });
 
 app.post("/urls", (req, res) => {
-  console.log(req.body);
+  console.log(`Added ${req.body.longURL} to urlDatabase`);
   let tinyUrl = generateRandomString();
+  res.redirect("/urls");
   res.send(urlDatabase[tinyUrl] = req.body.longURL);
 });
 
@@ -44,7 +45,9 @@ app.get("/u/:shortURL", (req, res) => {
 });
 
 app.post("/urls/:shortURL/delete", (req, res) => {
-  delete (urlDatabase[tinyUrl].req.body.longURL);
+  console.log(`Deleted ${urlDatabase[req.params.shortURL]} from urlDatabse`);
+  delete urlDatabase[req.params.shortURL];
+  res.redirect("/urls");
 })
 
 app.get("/urls.json", (req, res) => {
