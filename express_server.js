@@ -45,11 +45,18 @@ app.post("/login", (req, res) => {
   res.redirect("/");
 });
 
+//logout & clear cookies
 app.post("/logout", (req, res) => {
   console.log(`${req.cookies["username"]} Logged out`);
   res.clearCookie("username");
   res.redirect("/");
-})
+});
+
+app.get("/register", (req, res) => {
+  console.log("New member registering");
+  const templateVars = {username: req.cookies["username"]};
+  res.render("urls_register", templateVars)
+});
 
 
 //adding to database
