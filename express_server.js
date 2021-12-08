@@ -54,17 +54,15 @@ app.get("/urls/:shortURL/edit", (req, res) => {
   console.log(`Editing ${urlDatabase[req.params.shortURL]} from urlDatabse`);
   const templateVars = { shortURL: req.params.shortURL, longURL: urlDatabase[req.params.shortURL] };
   res.render("urls_show", templateVars);
-  const newUrl = req.body.answer;
-  console.log(newUrl)
 });
 
 //after pressing submit
 
-app.get("/urls/:shortURL/edit", (req, res) => {
-  console.log("This is kinda working");
-  const newUrl = req.body.answer
-  console.log(newUrl)
+app.post("/urls/:shortURL", (req, res) => {
+  console.log(req.body);
+  const newUrl = req.body.longURL
   urlDatabase[req.params.shortURL] = newUrl;
+  console.log(urlDatabase);
   res.redirect("/");
 });
 // irect('/');
