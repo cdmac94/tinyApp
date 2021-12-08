@@ -2,6 +2,8 @@ const express = require("express");
 const app = express();
 const PORT = 3000;
 const bodyParser = require("body-parser");
+const cookieParser = require('cookie-parser');
+app.use(cookieParser());
 app.use(bodyParser.urlencoded({extended: true}));
 
 //Inpsipired by https://stackoverflow.com/questions/1349404/generate-random-string-characters-in-javascript
@@ -24,17 +26,36 @@ const urlDatabase = {
 };
 
 app.get("/", (req, res) => {
+  const templateVars = {username: req.cookies["username"]}
   res.redirect("/urls");
 });
 
 app.get("/urls", (req, res) => {
-  const templateVars = { urls: urlDatabase };
+  const templateVars = {  
+    username: req.cookies["username"],
+    urls: urlDatabase };
   res.render("urls_index", templateVars);
 });
+
+//login cookie
+
+app.post("/login", (req, res) => {
+  console.log(`${req.body['Login']} logged in`)
+  res.cookie("username",(req.body['Login']));
+  res.redirect("/");
+});
+
+app.post("/logout", (req, res) => {
+  console.log(`${req.cookies["username"]} Logged out`);
+  res.clearCookie("username");
+  res.redirect("/");
+})
+
 
 //adding to database
 
 app.post("/urls", (req, res) => {
+  const templateVars = {username: req.cookies["username"]};
   console.log(`Added ${req.body.longURL} to urlDatabase`);
   let tinyUrl = generateRandomString();
   res.redirect("/urls");
@@ -44,6 +65,7 @@ app.post("/urls", (req, res) => {
 //link to original site
 
 app.get("/u/:shortURL", (req, res) => {
+  const templateVars = {username: req.cookies["username"]}
   const longURL = urlDatabase[req.params.shortURL];
   res.redirect(longURL);
 });
@@ -52,7 +74,10 @@ app.get("/u/:shortURL", (req, res) => {
 
 app.get("/urls/:shortURL/edit", (req, res) => {
   console.log(`Editing ${urlDatabase[req.params.shortURL]} from urlDatabse`);
-  const templateVars = { shortURL: req.params.shortURL, longURL: urlDatabase[req.params.shortURL] };
+  const templateVars = { 
+    username: req.cookies["username"],
+    shortURL: req.params.shortURL, 
+    longURL: urlDatabase[req.params.shortURL] };
   res.render("urls_show", templateVars);
 });
 
@@ -60,52 +85,36 @@ app.get("/urls/:shortURL/edit", (req, res) => {
 
 app.post("/urls/:shortURL", (req, res) => {
   console.log(req.body);
+  const templateVars = {username: req.cookies["username"]};
   const newUrl = req.body.longURL
   urlDatabase[req.params.shortURL] = newUrl;
   console.log(urlDatabase);
   res.redirect("/");
 });
-// irect('/');
-// app.get('/objectives/edit/:id', (req,res) => {
-//   const id = req.params.id;
-
-//   const templateVars = {
-//     id: id,
-//     objective: objectives[id]
-//   };
-//   res.render('edit', templateVars);
-// });
-
-// app.post('/objectives/edit/:id', (req,res) => {
-//   const id = req.params.id;
-//   console.log('req.body',req.body);
-//   const newQuestion = req.body.question;
-//   const newAnswer = req.body.answer;
-
-//   objectives[id] = {question: newQuestion, answer: newAnswer};
-//   res.red
-// });
-
-//deleting link from database
 
 app.post("/urls/:shortURL/delete", (req, res) => {
+  const templateVars = {username: req.cookies["username"]};
   console.log(`Deleted ${urlDatabase[req.params.shortURL]} from urlDatabse`);
-  
   delete urlDatabase[req.params.shortURL];
   res.redirect("/urls");
 });
 
 
 app.get("/urls.json", (req, res) => {
-  res.json(urlDatabase);
+  const templateVars = {username: req.cookies["username"]};
+  res.json(urlDatabase, templateVars);
 });
 
 app.get("/urls/new", (req, res) => {
-  res.render("urls_new");
+  const templateVars = {username: req.cookies["username"]};
+  res.render("urls_new", templateVars);
 });
 
 app.get('/urls/:shortURL', (req, res) => {
-  const templateVars = { shortURL: req.params.shortURL, longURL: urlDatabase[req.params.shortURL] };
+  const templateVars = { 
+    username: req.cookies["username"],
+    shortURL: req.params.shortURL, 
+    longURL: urlDatabase[req.params.shortURL] };
   console.log(templateVars);
   res.render('urls_show', templateVars);
 });
