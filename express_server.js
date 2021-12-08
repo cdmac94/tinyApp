@@ -36,7 +36,18 @@ const users = {
     email: "user2@example.com", 
     password: "dishwasher-funk"
   }
+};
+
+const findUserByEmail = (email) => {
+  for(const userId in users) {
+    const user = users[userId];
+    if(user.email === email) {
+      return user;
+    }
+  }
+  return null;
 }
+
 
 app.get("/", (req, res) => {
   const templateVars = {username: users.email}
@@ -61,6 +72,7 @@ app.post("/login", (req, res) => {
 //logout & clear cookies
 app.post("/logout", (req, res) => {
   console.log(`${req.cookies["username"]} Logged out`);
+  console.log(users);
   res.clearCookie("username");
   res.redirect("/");
 });
@@ -77,15 +89,28 @@ app.post("/register", (req, res) => {
   const useremail = req.body['email'];
   const userpass = req.body['password'];
   const userId = generateRandomString()
-
-  console.log(`New user: email: ${useremail}, userpass: ${userpass}, userId: ${userId}`);
+  
+  
+  
+  if (!useremail || !userpass) {
+    return res.status(400).send("email and password cannot be blank");
+  };
+  
+  const user = findUserByEmail(useremail);
+  
+  if(user) {
+    return res.status(400).send("a user already exists with that email")
+  }
+  
   const newUserId = {
-    id: userId, 
-    email: useremail, 
+  id: userId, 
+  email: useremail, 
     password: userpass,
   };
-  users[userId] = newUserId;
-  console.log(users);
+
+  users[userId] = newUserId
+  console.log(`New user: email: ${useremail}, userpass: ${userpass}, userId: ${userId}`);
+  console.log(users)
   res.cookie("username", newUserId.email);
   res.redirect("/");
 });
