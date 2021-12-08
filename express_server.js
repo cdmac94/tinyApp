@@ -52,8 +52,10 @@ app.get("/u/:shortURL", (req, res) => {
 
 app.get("/urls/:shortURL/edit", (req, res) => {
   console.log(`Editing ${urlDatabase[req.params.shortURL]} from urlDatabse`);
-  urlDatabase[req.params.shortURL] = req.body.longURL;
-  res.redirect (`/urls/:shortURL`);
+  const templateVars = { shortURL: req.params.shortURL, longURL: urlDatabase[req.params.shortURL] };
+  res.render("urls_show", templateVars);
+  const newUrl = req.body.answer;
+  console.log(newUrl)
 });
 
 //after pressing submit
@@ -65,7 +67,28 @@ app.get("/urls/:shortURL/edit", (req, res) => {
   urlDatabase[req.params.shortURL] = newUrl;
   res.redirect("/");
 });
+// irect('/');
+// app.get('/objectives/edit/:id', (req,res) => {
+//   const id = req.params.id;
 
+//   const templateVars = {
+//     id: id,
+//     objective: objectives[id]
+//   };
+//   res.render('edit', templateVars);
+// });
+
+// app.post('/objectives/edit/:id', (req,res) => {
+//   const id = req.params.id;
+//   console.log('req.body',req.body);
+//   const newQuestion = req.body.question;
+//   const newAnswer = req.body.answer;
+
+//   objectives[id] = {question: newQuestion, answer: newAnswer};
+//   res.red
+// });
+
+//deleting link from database
 
 app.post("/urls/:shortURL/delete", (req, res) => {
   console.log(`Deleted ${urlDatabase[req.params.shortURL]} from urlDatabse`);
