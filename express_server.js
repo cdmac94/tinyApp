@@ -24,13 +24,15 @@ const urlDatabase = {
 };
 
 app.get("/", (req, res) => {
-  res.send("Hello!, How's it hanging?");
+  res.redirect("/urls");
 });
 
 app.get("/urls", (req, res) => {
   const templateVars = { urls: urlDatabase };
   res.render("urls_index", templateVars);
 });
+
+//adding to database
 
 app.post("/urls", (req, res) => {
   console.log(`Added ${req.body.longURL} to urlDatabase`);
@@ -39,16 +41,39 @@ app.post("/urls", (req, res) => {
   res.send(urlDatabase[tinyUrl] = req.body.longURL);
 });
 
+//link to original site
+
 app.get("/u/:shortURL", (req, res) => {
   const longURL = urlDatabase[req.params.shortURL];
   res.redirect(longURL);
 });
 
+//link to editing/view page
+
+app.get("/urls/:shortURL/edit", (req, res) => {
+  console.log(`Editing ${urlDatabase[req.params.shortURL]} from urlDatabse`);
+  urlDatabase[req.params.shortURL] = req.body.longURL;
+  res.redirect (`/urls/:shortURL`);
+});
+
+//after pressing submit
+
+app.get("/urls/:shortURL/edit", (req, res) => {
+  console.log("This is kinda working");
+  const newUrl = req.body.answer
+  console.log(newUrl)
+  urlDatabase[req.params.shortURL] = newUrl;
+  res.redirect("/");
+});
+
+
 app.post("/urls/:shortURL/delete", (req, res) => {
   console.log(`Deleted ${urlDatabase[req.params.shortURL]} from urlDatabse`);
+  
   delete urlDatabase[req.params.shortURL];
   res.redirect("/urls");
-})
+});
+
 
 app.get("/urls.json", (req, res) => {
   res.json(urlDatabase);
@@ -59,7 +84,8 @@ app.get("/urls/new", (req, res) => {
 });
 
 app.get('/urls/:shortURL', (req, res) => {
-  const templateVars = { shortURL: req.params.shortURL, longURL: urlDatabase[shortURL] };
+  const templateVars = { shortURL: req.params.shortURL, longURL: urlDatabase[req.params.shortURL] };
+  console.log(templateVars);
   res.render('urls_show', templateVars);
 });
 
