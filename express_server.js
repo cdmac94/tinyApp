@@ -21,9 +21,14 @@ function generateRandomString () {
 app.set("view engine", "ejs");
 
 const urlDatabase = {
-  "b2xVn2": "http://www.lighthouselbas.ca",
-  "9sm5xK": "http://www.google.com"
+  "b2xVn2": {
+    longURL: "http://www.lighthouselbas.ca",
+    userId: "aJ48lW" },
+  "9sm5xK": {
+    longURL: "http://www.google.com",
+    userId: "aJ48lW"}
 };
+
 
 const users = { 
   "userRandomID": {
@@ -57,7 +62,8 @@ app.get("/", (req, res) => {
 app.get("/urls", (req, res) => {
   const templateVars = {  
     user_id: req.cookies["user_id"],
-    urls: urlDatabase };
+    urls: urlDatabase
+   };
   res.render("urls_index", templateVars);
 });
 
@@ -65,8 +71,11 @@ app.get("/urls", (req, res) => {
 
 app.get("/login", (req, res) => {
   const templateVars = {user_id: req.cookies["user_id"]};
-
+  if (req.cookies["user_id"]){
+    res.redirect("/");
+  } else {
   res.render("urls_login", templateVars)
+  }
 });
 
 app.post("/login", (req, res) => {
@@ -100,9 +109,13 @@ app.post("/logout", (req, res) => {
 //Registration page
 
 app.get("/register", (req, res) => {
-  console.log("New member registering");
   const templateVars = {user_id: req.cookies["user_id"]};
+  if (req.cookies["user_id"]){
+    res.redirect("/")
+  } else {
+    console.log("New member registering");
   res.render("urls_register", templateVars);
+  }
 });
 
 app.post("/register", (req, res) => {
@@ -140,68 +153,109 @@ app.post("/register", (req, res) => {
 
 app.post("/urls", (req, res) => {
   const templateVars = {user_id: req.cookies["user_id"]}
+  const userId = req.cookies["user_id"]
+  
+  if(!userId) {
+  res.status(401).send("You must be logged in to make a Tiny Url");
+  return
+  }
   console.log(`Added ${req.body.longURL} to urlDatabase`);
   let tinyUrl = generateRandomString();
+  urlDatabase[tinyUrl] = { longURL: req.body.longURL, userId: req.cookies["user_id"]};
+  console.log(urlDatabase)
   res.redirect("/urls");
-  res.send(urlDatabase[tinyUrl] = req.body.longURL);
 });
 
 //link to original site
 
 app.get("/u/:shortURL", (req, res) => {
   const templateVars = {user_id: req.cookies["user_id"]}
-  const longURL = urlDatabase[req.params.shortURL];
+  if (!urlDatabase[req.params.shortURL]) {
+    return res.status(401).send("Sorry! this link does not exist");
+  }
+  const longURL = urlDatabase[req.params.shortURL].longURL;
+  const shortURL = urlDatabase[req.params.shortURL].userId;
+
+  console.log(shortURL)
+  console.log(longURL);
   res.redirect(longURL);
 });
 
-//link to editing/view page
-
-app.get("/urls/:shortURL/edit", (req, res) => {
-  console.log(`Editing ${urlDatabase[req.params.shortURL]} from urlDatabse`);
+app.post("/urls/:shortURL/delete", (req, res) => {
   const templateVars = { 
     user_id: req.cookies["user_id"],
     shortURL: req.params.shortURL, 
-    longURL: urlDatabase[req.params.shortURL] };
-  res.render("urls_show", templateVars);
-});
+    longURL: urlDatabase[req.params.shortURL].longURL };
+  const Id = req.cookies["user_id"];
+  const urlUser = urlDatabase[req.params.shortURL].userId;
+  console.log(templateVars)
+  console.log(urlUser);
+  if(!Id) {
+    return res.status(401).send("You must be logged in to delete URLs");
+  }
 
-//after pressing submit
+  if(Id !== urlUser) {
+    return res.status(401).send("You can only delete your own URLs");
+  }
 
-app.post("/urls/:shortURL", (req, res) => {
-  console.log(req.body);
-  const templateVars = {user_id: req.cookies["user_id"]};
-  const newUrl = req.body.longURL
-  urlDatabase[req.params.shortURL] = newUrl;
-  console.log(urlDatabase);
-  res.redirect("/");
-});
-
-app.post("/urls/:shortURL/delete", (req, res) => {
-  const templateVars = {user_id: req.cookies["user_id"]};
-  console.log(`Deleted ${urlDatabase[req.params.shortURL]} from urlDatabse`);
+  console.log(`Deleted ${urlDatabase[req.params.shortURL].longURL} from urlDatabse`);
   delete urlDatabase[req.params.shortURL];
   res.redirect("/urls");
 });
 
+//link to editing/view page
+
+app.get('/urls/:shortURL', (req, res) => {
+  const templateVars = { 
+    user_id: req.cookies["user_id"],
+    shortURL: req.params.shortURL, 
+    longURL: urlDatabase[req.params.shortURL].longURL
+  };
+
+  const Id = req.cookies["user_id"];
+  const urlUser = urlDatabase[req.params.shortURL].userId;
+  
+  console.log(urlUser);
+  if(!Id) {
+    return res.status(401).send("You must be logged in to edit URLs");
+  }
+
+  if(Id !== urlUser) {
+    return res.status(401).send("You can only edit your own URLs");
+  }
+  console.log(templateVars.longURL)
+  console.log(templateVars.shortURL);
+  res.render('urls_show', templateVars);
+});
+
+
+//after pressing submit
+
+app.post("/urls/:shortURL", (req, res) => {
+  const templateVars = {user_id: req.cookies["user_id"]};
+  const newUrl = req.body.longURL
+  urlDatabase[req.params.shortURL]['longURL'] = newUrl;
+  console.log(urlDatabase);
+  res.redirect("/");
+});
 
 app.get("/urls.json", (req, res) => {
   const templateVars = {user_id: req.cookies["user_id"]};
   res.json(urlDatabase, templateVars);
 });
 
-app.get("/urls/new", (req, res) => {
+app.get("/new", (req, res) => {
   const templateVars = {user_id: req.cookies["user_id"]};
+
+  const userId = req.cookies["user_id"];
+  
+  if(!userId) {
+    return res.status(401).send("You must be logged into make new TinyURL");
+  }
+
   res.render("urls_new", templateVars);
 });
 
-app.get('/urls/:shortURL', (req, res) => {
-  const templateVars = { 
-    user_id: req.cookies["user_id"],
-    shortURL: req.params.shortURL, 
-    longURL: urlDatabase[req.params.shortURL] };
-  console.log(templateVars);
-  res.render('urls_show', templateVars);
-});
 
 
 
