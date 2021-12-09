@@ -53,6 +53,18 @@ const findUserByEmail = (email) => {
   return null;
 }
 
+const urlsForUser = (id) => {
+  const userDatabase = {}
+  for (urls in urlDatabase) {
+    const userURLs = urlDatabase[urls].userId;
+    if(id === userURLs) {
+      // console.log(urlDatabase[urls]);
+      userDatabase[urls] = urlDatabase[urls];
+    }
+  }
+  return userDatabase;
+}
+
 
 app.get("/", (req, res) => {
   const templateVars = {user_id: req.cookies["user_id"]}
@@ -60,9 +72,13 @@ app.get("/", (req, res) => {
 });
 
 app.get("/urls", (req, res) => {
+  const userId = req.cookies["user_id"]
+  
+  const usersURLs = urlsForUser(userId);
+  
   const templateVars = {  
     user_id: req.cookies["user_id"],
-    urls: urlDatabase
+    urls: usersURLs
    };
   res.render("urls_index", templateVars);
 });
