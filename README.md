@@ -4,11 +4,11 @@ TinyApp is a full stack web application built with Node and Express that allows 
 
 ## Final Product
 
-!["/Users/collinmacleod/lighthouse/w3/tinyApp/docs/Urls-Logged-in.png cription"](#)
+!["docs/Urls-Logged-in.png cription"](#)
 
 Urls will not be displayed if not logged in.
 
-!["/Users/collinmacleod/lighthouse/w3/tinyApp/docs/Urls-Not-Logged-in.png"](#)
+!["docs/Urls-Not-Logged-in.png"](#)
 
 Only a users url links will be displayed 
 
