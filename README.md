@@ -4,11 +4,11 @@ TinyApp is a full stack web application built with Node and Express that allows 
 
 ## Final Product
 
-!["Only a users url links will be displayed "](https://github.com/cdmac94/tinyApp/blob/master/docs/Urls-Logged-in.png)(#)
+!["Only a users url links will be displayed "](https://github.com/cdmac94/tinyApp/blob/master/docs/Urls-Logged-in.png)
 
 
 
-!["Urls will not be displayed if not logged in."](https://github.com/cdmac94/tinyApp/blob/master/docs/Urls-Not-Logged-in.png)(#)
+!["Urls will not be displayed if not logged in."](https://github.com/cdmac94/tinyApp/blob/master/docs/Urls-Not-Logged-in.png)
 
 
 ## Dependencies
