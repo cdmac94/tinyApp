@@ -81,7 +81,7 @@ app.post("/login", (req, res) => {
     return res.status(403).send("a user with that email does not exist");
   }
 
-  if (bcrypt.compareSync(userpass, user.email)) {
+  if (!bcrypt.compareSync(userpass, user.email)) {
     return res.status(403).send('password does not match');
   }
 
