@@ -69,19 +69,20 @@ app.get("/login", (req, res) => {
 
 app.post("/login", (req, res) => {
   const useremail = req.body['email'];
-  const userpass = req.body['password'];
+  const userpass = req.body.password;
 
   if (!useremail || !userpass) {
     return res.status(400).send("email and password cannot be blank");
   }
 
   const user = findUserByEmail(useremail, users);
-
+  console.log(user)
   if (!user) {
     return res.status(403).send("a user with that email does not exist");
   }
 
-  if (!bcrypt.compareSync(userpass, user.email)) {
+
+  if (!bcrypt.compareSync(userpass, user.password)) {
     return res.status(403).send('password does not match');
   }
 
