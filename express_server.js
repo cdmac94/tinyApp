@@ -2,10 +2,13 @@ const express = require("express");
 const app = express();
 const PORT = 3000;
 const bodyParser = require("body-parser");
-const cookieParser = require('cookie-parser');
+const cookieSession = require('cookie-session');
 const bcrypt = require('bcryptjs');
 
-app.use(cookieParser());
+app.use(cookieSession({
+  name: 'session',
+  keys: ['key1']
+}));
 app.use(bodyParser.urlencoded({extended: true}));
 
 //Inpsipired by https://stackoverflow.com/questions/1349404/generate-random-string-characters-in-javascript
@@ -60,7 +63,6 @@ const urlsForUser = (id) => {
   for (urls in urlDatabase) {
     const userURLs = urlDatabase[urls].userId;
     if(id === userURLs) {
-      // console.log(urlDatabase[urls]);
       userDatabase[urls] = urlDatabase[urls];
     }
   }
@@ -69,17 +71,17 @@ const urlsForUser = (id) => {
 
 
 app.get("/", (req, res) => {
-  const templateVars = {user_id: req.cookies["user_id"]}
+  const templateVars = {user_id: req.session["user_id"]}
   res.redirect("/urls");
 });
 
 app.get("/urls", (req, res) => {
-  const userId = req.cookies["user_id"]
+  const userId = req.session.sessionName;
   
   const usersURLs = urlsForUser(userId);
 
   const templateVars = {  
-    user_id: req.cookies["user_id"],
+    user_id: userId,
     urls: usersURLs
    };
   res.render("urls_index", templateVars);
@@ -88,8 +90,8 @@ app.get("/urls", (req, res) => {
 //login cookie
 
 app.get("/login", (req, res) => {
-  const templateVars = {user_id: req.cookies["user_id"]};
-  if (req.cookies["user_id"]){
+  const templateVars = {user_id: req.session.sessionName};
+  if (req.session.session){
     res.redirect("/");
   } else {
   res.render("urls_login", templateVars)
@@ -117,21 +119,21 @@ app.post("/login", (req, res) => {
     return res.status(403).send('password does not match')
   }
 
-  res.cookie("user_id", useremail);
+  req.session.sessionName = user.email;
   res.redirect("/");
 });
 
-//logout & clear cookies
+//logout & clear session
 app.post("/logout", (req, res) => {
-  res.clearCookie("user_id");
+  req.session = null;
   res.redirect("/");
 });
 
 //Registration page
 
 app.get("/register", (req, res) => {
-  const templateVars = {user_id: req.cookies["user_id"]};
-  if (req.cookies["user_id"]){
+  const templateVars = {user_id: req.session.sessionName};
+  if (req.session.sessionName){
     res.redirect("/")
   } else {
     console.log("New member registering");
@@ -165,7 +167,7 @@ app.post("/register", (req, res) => {
 
   users[userId] = newUserId
   console.log(`New user: email: ${useremail}, userpass: ${encryptedPass}, userId: ${userId}`);
-  res.cookie("user_id", newUserId.email);
+  req.session.sessionName = newUserId.email
   res.redirect("/");
 });
 
@@ -173,8 +175,8 @@ app.post("/register", (req, res) => {
 //adding to database
 
 app.post("/urls", (req, res) => {
-  const templateVars = {user_id: req.cookies["user_id"]}
-  const userId = req.cookies["user_id"]
+  const templateVars = {user_id: req.session.sessionName}
+  const userId = req.session.sessionName
   
   if(!userId) {
   res.status(401).send("You must be logged in to make a Tiny Url");
@@ -182,7 +184,7 @@ app.post("/urls", (req, res) => {
   }
   console.log(`Added ${req.body.longURL} to urlDatabase`);
   let tinyUrl = generateRandomString();
-  urlDatabase[tinyUrl] = { longURL: req.body.longURL, userId: req.cookies["user_id"]};
+  urlDatabase[tinyUrl] = { longURL: req.body.longURL, userId: req.session.sessionName};
   console.log(urlDatabase)
   res.redirect("/urls");
 });
@@ -190,7 +192,7 @@ app.post("/urls", (req, res) => {
 //link to original site
 
 app.get("/u/:shortURL", (req, res) => {
-  const templateVars = {user_id: req.cookies["user_id"]}
+  const templateVars = {user_id: req.session.sessionName}
   if (!urlDatabase[req.params.shortURL]) {
     return res.status(401).send("Sorry! this link does not exist");
   }
@@ -204,10 +206,10 @@ app.get("/u/:shortURL", (req, res) => {
 
 app.post("/urls/:shortURL/delete", (req, res) => {
   const templateVars = { 
-    user_id: req.cookies["user_id"],
+    user_id: req.session["user_id"],
     shortURL: req.params.shortURL, 
     longURL: urlDatabase[req.params.shortURL].longURL };
-  const Id = req.cookies["user_id"];
+  const Id = req.session["user_id"];
   const urlUser = urlDatabase[req.params.shortURL].userId;
   console.log(templateVars)
   console.log(urlUser);
@@ -228,12 +230,12 @@ app.post("/urls/:shortURL/delete", (req, res) => {
 
 app.get('/urls/:shortURL', (req, res) => {
   const templateVars = { 
-    user_id: req.cookies["user_id"],
+    user_id: req.session["user_id"],
     shortURL: req.params.shortURL, 
     longURL: urlDatabase[req.params.shortURL].longURL
   };
 
-  const Id = req.cookies["user_id"];
+  const Id = req.session.sessionName;
   const urlUser = urlDatabase[req.params.shortURL].userId;
   
   console.log(urlUser);
@@ -253,7 +255,7 @@ app.get('/urls/:shortURL', (req, res) => {
 //after pressing submit
 
 app.post("/urls/:shortURL", (req, res) => {
-  const templateVars = {user_id: req.cookies["user_id"]};
+  const templateVars = {user_id: req.session.sessionName};
   const newUrl = req.body.longURL
   urlDatabase[req.params.shortURL]['longURL'] = newUrl;
   console.log(urlDatabase);
@@ -261,14 +263,14 @@ app.post("/urls/:shortURL", (req, res) => {
 });
 
 app.get("/urls.json", (req, res) => {
-  const templateVars = {user_id: req.cookies["user_id"]};
+  const templateVars = {user_id: req.session.sessionName};
   res.json(urlDatabase, templateVars);
 });
 
 app.get("/new", (req, res) => {
-  const templateVars = {user_id: req.cookies["user_id"]};
+  const templateVars = {user_id: req.session.sessionName};
 
-  const userId = req.cookies["user_id"];
+  const userId = req.session.sessionName;
   
   if(!userId) {
     return res.status(401).send("You must be logged into make new TinyURL");
