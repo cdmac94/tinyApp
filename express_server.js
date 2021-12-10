@@ -3,6 +3,8 @@ const app = express();
 const PORT = 3000;
 const bodyParser = require("body-parser");
 const cookieParser = require('cookie-parser');
+const bcrypt = require('bcryptjs');
+
 app.use(cookieParser());
 app.use(bodyParser.urlencoded({extended: true}));
 
@@ -75,7 +77,7 @@ app.get("/urls", (req, res) => {
   const userId = req.cookies["user_id"]
   
   const usersURLs = urlsForUser(userId);
-  
+
   const templateVars = {  
     user_id: req.cookies["user_id"],
     urls: usersURLs
@@ -101,14 +103,17 @@ app.post("/login", (req, res) => {
   if (!useremail || !userpass) {
     return res.status(400).send("email and password cannot be blank");
   };
-  
+
   const user = findUserByEmail(useremail);
+
   
+  console.log(userpass)
+
   if(!user){
     return res.status(403).send("a user with that email does not exist")
   }
 
-  if(user.password !== userpass) {
+  if(bcrypt.compareSync(userpass, user.email)) {
     return res.status(403).send('password does not match')
   }
 
@@ -137,9 +142,10 @@ app.get("/register", (req, res) => {
 app.post("/register", (req, res) => {
   const useremail = req.body['email'];
   const userpass = req.body['password'];
-  const userId = generateRandomString()
+  const userId = generateRandomString();
+  const encryptedPass = bcrypt.hashSync(userpass, 10);
   
-  
+  console.log(userpass);
   
   if (!useremail || !userpass) {
     return res.status(400).send("email and password cannot be blank");
@@ -154,12 +160,11 @@ app.post("/register", (req, res) => {
   const newUserId = {
   id: userId, 
   email: useremail, 
-    password: userpass,
+  password: encryptedPass,
   };
 
   users[userId] = newUserId
-  console.log(`New user: email: ${useremail}, userpass: ${userpass}, userId: ${userId}`);
-  console.log(users)
+  console.log(`New user: email: ${useremail}, userpass: ${encryptedPass}, userId: ${userId}`);
   res.cookie("user_id", newUserId.email);
   res.redirect("/");
 });
