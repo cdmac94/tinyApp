@@ -1,6 +1,6 @@
 const express = require("express");
 const app = express();
-const PORT = 3000;
+const PORT = 3001;
 const bodyParser = require("body-parser");
 const cookieSession = require('cookie-session');
 const bcrypt = require('bcryptjs');
@@ -44,6 +44,8 @@ app.get("/", (req, res) => {
   res.redirect("/urls");
 });
 
+
+
 app.get("/urls", (req, res) => {
   const userId = req.session.sessionName;
   
@@ -56,7 +58,7 @@ app.get("/urls", (req, res) => {
   res.render("urls_index", templateVars);
 });
 
-//login cookie
+//go to login page
 
 app.get("/login", (req, res) => {
   const templateVars = {userId: req.session.sessionName};
@@ -67,9 +69,13 @@ app.get("/login", (req, res) => {
   }
 });
 
+//login and 
+
 app.post("/login", (req, res) => {
   const useremail = req.body['email'];
   const userpass = req.body.password;
+
+  // Validate if user is registered and password is a match
 
   if (!useremail || !userpass) {
     return res.status(400).send("email and password cannot be blank");
@@ -90,6 +96,7 @@ app.post("/login", (req, res) => {
 });
 
 //logout & clear session
+
 app.post("/logout", (req, res) => {
   req.session = null;
   res.redirect("/");
@@ -102,10 +109,11 @@ app.get("/register", (req, res) => {
   if (req.session.sessionName) {
     res.redirect("/");
   } else {
-    console.log("New member registering");
     res.render("urls_register", templateVars);
   }
 });
+
+//Registration process
 
 app.post("/register", (req, res) => {
   const useremail = req.body['email'];
@@ -113,7 +121,7 @@ app.post("/register", (req, res) => {
   const userId = generateRandomString();
   const encryptedPass = bcrypt.hashSync(userpass, 10);
   
-  console.log(userpass);
+  // Validate if user info is valid and novel
   
   if (!useremail || !userpass) {
     return res.status(400).send("email and password cannot be blank");
@@ -132,7 +140,6 @@ app.post("/register", (req, res) => {
   };
 
   users[userId] = newUserId;
-  console.log(`New user: email: ${useremail}, userpass: ${encryptedPass}, userId: ${userId}`);
   req.session.sessionName = newUserId.email;
   res.redirect("/");
 });
@@ -143,14 +150,15 @@ app.post("/register", (req, res) => {
 app.post("/urls", (req, res) => {
   const userId = req.session.sessionName;
   
+  // Validate if user is logged in
+
   if (!userId) {
     res.status(401).send("You must be logged in to make a Tiny Url");
     return;
   }
-  console.log(`Added ${req.body.longURL} to urlDatabase`);
   let tinyUrl = generateRandomString();
   urlDatabase[tinyUrl] = { longURL: req.body.longURL, userId: req.session.sessionName};
-  res.redirect("/urls");
+  res.redirect(`/urls/${tinyUrl}`);
 });
 
 //link to original site
@@ -170,6 +178,8 @@ app.post("/urls/:shortURL/delete", (req, res) => {
   const Id = req.session.sessionName;
   const urlUser = urlDatabase[req.params.shortURL].userId;
 
+  // Validate if user is logged in
+
   if (!Id) {
     return res.status(401).send("You must be logged in to delete URLs");
   }
@@ -178,7 +188,6 @@ app.post("/urls/:shortURL/delete", (req, res) => {
     return res.status(401).send("You can only delete your own URLs");
   }
 
-  console.log(`Deleted ${urlDatabase[req.params.shortURL].longURL} from urlDatabse`);
   delete urlDatabase[req.params.shortURL];
   res.redirect("/urls");
 });
@@ -194,8 +203,9 @@ app.get('/urls/:shortURL', (req, res) => {
 
   const Id = req.session.sessionName;
   const urlUser = urlDatabase[req.params.shortURL].userId;
+
+  // Validate if user is logged in  
   
-  console.log(urlUser);
   if (!Id) {
     return res.status(401).send("You must be logged in to edit URLs");
   }
@@ -203,8 +213,6 @@ app.get('/urls/:shortURL', (req, res) => {
   if (Id !== urlUser) {
     return res.status(401).send("You can only edit your own URLs");
   }
-  console.log(templateVars.longURL);
-  console.log(templateVars.shortURL);
   res.render('urls_show', templateVars);
 });
 
@@ -215,18 +223,23 @@ app.post("/urls/:shortURL", (req, res) => {
   const newUrl = req.body.longURL;
   urlDatabase[req.params.shortURL]['longURL'] = newUrl;
   console.log(urlDatabase);
-  res.redirect("/");
+  res.redirect(`/urls/${req.params.shortURL}`);
 });
+
 
 app.get("/urls.json", (req, res) => {
   const templateVars = {userId: req.session.sessionName};
   res.json(urlDatabase, templateVars);
 });
 
+//web page for link creator 
+
 app.get("/new", (req, res) => {
   const templateVars = {userId: req.session.sessionName};
 
   const userId = req.session.sessionName;
+  
+  //check if user is logged in
   
   if (!userId) {
     return res.status(401).send("You must be logged into make new TinyURL");
