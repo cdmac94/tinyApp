@@ -7,6 +7,7 @@ const bcrypt = require('bcryptjs');
 const findUserByEmail = require('./helpers').findUserByEmail;
 const urlsForUser = require('./helpers').urlsForUser;
 const generateRandomString = require('./helpers.js').generateRandomString;
+const { Template } = require("ejs");
 
 app.use(cookieSession({
   name: 'session',
@@ -196,12 +197,20 @@ app.post("/urls/:shortURL/delete", (req, res) => {
 //link to editing/view page
 
 app.get('/urls/:shortURL', (req, res) => {
+
+  for (const ids in urlDatabase) {
+    if(req.params.shortURL !== ids) {
+      return res.status(404).send("Sorry! This link does not exist");
+    }
+  }
+
   const templateVars = {
     userId: req.session.sessionName,
     shortURL: req.params.shortURL,
     longURL: urlDatabase[req.params.shortURL].longURL
   };
 
+ 
   const Id = req.session.sessionName;
   const urlUser = urlDatabase[req.params.shortURL].userId;
 
@@ -214,6 +223,7 @@ app.get('/urls/:shortURL', (req, res) => {
   if (Id !== urlUser) {
     return res.status(401).send("You can only edit your own URLs");
   }
+
   res.render('urls_show', templateVars);
 });
 
