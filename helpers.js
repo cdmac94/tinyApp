@@ -19,6 +19,10 @@ const urlsForUser = (id, database) => {
   return userDatabase;
 };
 
+const urlsInDatabase  = (URL, database) => {
+  return database[URL];
+};
+
 //Inpsipired by https://stackoverflow.com/questions/1349404/generate-random-string-characters-in-javascript
 
 const generateRandomString = () => {
@@ -31,4 +35,4 @@ const generateRandomString = () => {
 };
 
 
-module.exports = {findUserByEmail, urlsForUser, generateRandomString};
+module.exports = {findUserByEmail, urlsForUser, generateRandomString, urlsInDatabase};

@@ -7,6 +7,7 @@ const bcrypt = require('bcryptjs');
 const findUserByEmail = require('./helpers').findUserByEmail;
 const urlsForUser = require('./helpers').urlsForUser;
 const generateRandomString = require('./helpers.js').generateRandomString;
+const urlsInDatabase = require('./helpers.js').urlsInDatabase
 const { Template } = require("ejs");
 
 app.use(cookieSession({
@@ -166,9 +167,12 @@ app.post("/urls", (req, res) => {
 //link to original site
 
 app.get("/u/:shortURL", (req, res) => {
-  if (!urlDatabase[req.params.shortURL]) {
+
+  for (url in urlDatabase) {
+  if (!urlDatabase[url]) {
     return res.status(404).send("Sorry! this link does not exist");
   }
+}
   const longURL = urlDatabase[req.params.shortURL].longURL;
 
   res.redirect(longURL);
@@ -198,33 +202,33 @@ app.post("/urls/:shortURL/delete", (req, res) => {
 
 app.get('/urls/:shortURL', (req, res) => {
 
-  for (const ids in urlDatabase) {
-    if(req.params.shortURL !== ids) {
-      return res.status(404).send("Sorry! This link does not exist");
-    }
-  }
-
+ let urlCode = req.params.shortURL;
+ 
+ if(!urlsInDatabase(urlCode, urlDatabase)){
+   return res.status(404).send("Sorry! This link does not exist");
+ }
   const templateVars = {
     userId: req.session.sessionName,
     shortURL: req.params.shortURL,
     longURL: urlDatabase[req.params.shortURL].longURL
   };
-
- 
+  
+  
   const Id = req.session.sessionName;
   const urlUser = urlDatabase[req.params.shortURL].userId;
-
+  
   // Validate if user is logged in  
   
   if (!Id) {
     return res.status(401).send("You must be logged in to edit URLs");
   }
-
+  
   if (Id !== urlUser) {
     return res.status(401).send("You can only edit your own URLs");
   }
 
   res.render('urls_show', templateVars);
+
 });
 
 
@@ -233,7 +237,6 @@ app.get('/urls/:shortURL', (req, res) => {
 app.post("/urls/:shortURL", (req, res) => {
   const newUrl = req.body.longURL;
   urlDatabase[req.params.shortURL]['longURL'] = newUrl;
-  console.log(urlDatabase);
   res.redirect(`/urls/${req.params.shortURL}`);
 });
 
